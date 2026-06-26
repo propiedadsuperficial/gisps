@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniGIS - Operaciones Corporativas</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Contenedor Principal en modo Tabla/Bloques para evitar fallos de renderizado */
+        #app-container {
+            display: table;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Panel Lateral (Sidebar) */
+        #sidebar {
+            display: table-cell;
+            width: 320px;
+            height: 100%;
+            vertical-align: top;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        /* Contenedor del Mapa */
+        #map-container {
+            display: table-cell;
+            width: auto;
+            height: 100%;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Estilos de la Interfaz del Sidebar */
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #34495e;
+            padding-bottom: 10px;
+            color: #3498db;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            background-color: #34495e;
+            color: #ecf0f1;
+            border: none;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #415b76;
+        }
+
+        .btn-action {
+            background-color: #3498db;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .btn-action:hover {
+            background-color: #2980b9;
+        }
+
+        /* Estilos de la Leyenda en el Mapa */
+        .legend {
+            background: white;
+            color: #333;
+            padding: 12px;
+            line-height: 18px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            font-size: 0.85rem;
+        }
+
+        .legend h4 {
+            margin: 0 0 8px;
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+        }
+
+        .legend i {
+            width: 16px;
+            height: 16px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+            border-radius: 3px;
+        }
+
+        /* Ocultar elementos durante la impresión a PDF */
+        @media print {
+            #sidebar {
+                display: none !important;
+            }
+            #map-container {
+                width: 100% !important;
+                height: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        
+        <div id="sidebar">
+            <h2>MiniGIS Operaciones</h2>
+            
+            <div class="section">
+                <h3>Herramientas</h3>
+                <button class="btn btn-action" onclick="copiarVistaAlPortapapeles()">🔗 Copiar Vista al Portapapeles</button>
+                <button class="btn btn-action" style="background-color: #e67e22;" onclick="exportarAPDF()">📄 Exportar a PDF</button>
+            </div>
+
+            <div class="section">
+                <h3>Accesos Rápidos</h3>
+                <button class="btn" onclick="irAViewport('sector_norte')">📍 Sector Norte (Exploración)</button>
+                <button class="btn" onclick="irAViewport('sector_central')">📍 Planta Central / Faena</button>
+                <button class="btn" onclick="irAViewport('sector_sur')">📍 Sector Sur (Predios Nuevos)</button>
+            </div>
+
+            <div class="section">
+                <h3>Atributos de Predio</h3>
+                <div id="info-panel" style="background: #34495e; padding: 10px; border-radius: 4px; font-size: 0.85rem; color: #clip;">
+                    <p style="font-style: italic; color: #a6b0b7;">Haga clic en un predio para ver su información y hacer zoom automático.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://bundle.run/leaflet-easyprint@2.1.9"></script>
+
+    <script>
+        // 1. INICIALIZACIÓN DEL MAPA (Centrado inicialmente en coordenadas de la zona de Atacama)
+        const map = L.map('map', {
+            zoomControl: true
+        }).setView([-27.361, -70.335], 13);
+
+        // 2. CAPAS BASE (ON/OFF)
+        const capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        // 3. DATOS MOCK (Simulación del JSON de predios que luego vendrá de Cloudflare R2 / PostGIS)
+        const datosPrediosMock = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": { "id_predio": "P-101", "nombre": "Predio Norte Alfa", "estado": "Vigente", "superficie_ha": 45.2 },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[-70.350, -27.350], [-70.330, -27.350], [-70.330, -27.360], [-70.350, -27.360], [-70.350, -27.350]]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "id_predio": "P-102", "nombre": "Terreno Central Beta", "estado": "En Proceso", "superficie_ha": 12.8 },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[-70.325, -27.362], [-70.310, -27.362], [-70.310, -27.370], [-70.325, -27.370], [-70.325, -27.362]]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": { "id_predio": "P-103", "nombre": "Reserva Sur Gamma", "estado": "Restringido", "superficie_ha": 78.1 },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[-70.345, -27.375], [-70.320, -27.375], [-70.320, -27.390], [-70.345, -27.390], [-70.345, -27.375]]]
+                    }
+                }
+            ]
+        };
+
+        // Estilos según el estado del predio
+        function obtenerEstiloPredio(feature) {
+            switch (feature.properties.estado) {
+                case 'Vigente': return { color: "#2ecc71", fillColor: "#2ecc71", weight: 2, fillOpacity: 0.4 };
+                case 'En Proceso': return { color: "#e67e22", fillColor: "#e67e22", weight: 2, fillOpacity: 0.4 };
+                case 'Restringido': return { color: "#e74c3c", fillColor: "#e74c3c", weight: 2, fillOpacity: 0.4 };
+                default: return { color: "#34495e", fillColor: "#34495e", weight: 2, fillOpacity: 0.4 };
+            }
+        }
+
+        // CONTROL OPERATIVO: Zoom a Feature y despliegue de atributos al hacer click
+        let capaPredios;
+        
+        function deFinirInteraccionFeature(feature, layer) {
+            layer.on('click', function (e) {
+                // 1. Zoom automático ajustado al polígono (Zoom a Feature)
+                map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+                
+                // 2. Actualizar panel lateral de atributos
+                const panel = document.getElementById('info-panel');
+                panel.innerHTML = `
+                    <strong style="color:#3498db; font-size:1rem;">${feature.properties.nombre}</strong><br><br>
+                    <b>ID Predio:</b> ${feature.properties.id_predio}<br>
+                    <b>Estado:</b> ${feature.properties.estado}<br>
+                    <b>Superficie:</b> ${feature.properties.superficie_ha} Ha
+                `;
+                
+                // Evitar que el click se propague al mapa base
+                L.DomEvent.stopPropagation(e);
+            });
+            
+            // Tooltip rápido al pasar el cursor
+            layer.bindTooltip(feature.properties.nombre, { sticky: true });
+        }
+
+        // Cargar la capa vectorial en el mapa
+        capaPredios = L.geoJSON(datosPrediosMock, {
+            style: obtenerEstiloPredio,
+            onEachFeature: deFinirInteraccionFeature
+        }).addTo(map);
+
+
+        // 4. CONTROL OPERATIVO: Escala Gráfica (Métrica exclusivamente)
+        L.control.scale({
+            metric: true,
+            imperial: false,
+            position: 'bottomleft'
+        }).addTo(map);
+
+
+        // 5. CONTROL OPERATIVO: Encendido / Apagado de Capas (On/Off)
+        const baseLayers = {
+            "Mapa de Calles": capaCalles,
+            "Imágenes Satelitales": capaSatelite
+        };
+
+        const overlays = {
+            "Predios Corporativos": capaPredios
+        };
+
+        L.control.layers(baseLayers, overlays, { collapsed: false, position: 'topright' }).addTo(map);
+
+
+        // 6. CONTROL OPERATIVO: Leyenda Dinámica Estructurada
+        const leyenda = L.control({ position: 'bottomright' });
+        leyenda.onAdd = function (map) {
+            const div = L
