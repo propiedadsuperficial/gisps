@@ -1,232 +1,136 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>MiniGIS PRO - Operaciones Pucobre</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body, html { height: 100%; overflow: hidden; }
-
-#app-container { display: flex; height: 100%; }
-
-#sidebar {
-    width: 320px;
-    background: #2c3e50;
-    color: #ecf0f1;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-#map { flex-grow: 1; }
-
-.section {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #34495e;
-    padding-bottom: 10px;
-}
-
-h3 {
-    font-size: 0.8rem;
-    color: #bdc3c7;
-    margin-bottom: 8px;
-}
-
-select, input {
-    width: 100%;
-    padding: 5px;
-    border-radius: 4px;
-    border: none;
-}
-
-.nav-btn {
-    width: 100%;
-    margin-top: 5px;
-    padding: 8px;
-    background: #34495e;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
+    <meta charset="UTF-8">
+    <title>MiniGIS - Operaciones Pucobre</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body, html { height: 100%; overflow: hidden; }
+        #app-container { display: flex; width: 100%; height: 100%; }
+        #sidebar { width: 320px; background-color: #2c3e50; color: #ecf0f1; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.2); }
+        #map-container { flex-grow: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+.section { margin-bottom: 25px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
+        h3 { font-size: 0.9rem; color: #bdc3c7; margin-bottom: 10px; text-transform: uppercase; }
+.control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nav-btn { background: #34495e; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; flex: 1; }
 .nav-btn:hover { background: #3498db; }
-
-#info-panel {
-    background: #1e272e;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-}
-
-.legend-box {
-    width: 12px;
-    height: 12px;
-    display: inline-block;
-    margin-right: 5px;
-}
-</style>
+        #info-panel { background: #1e272e; padding: 10px; border-radius: 4px; font-size: 0.85rem; max-height: 400px; overflow-y: auto; }
+        .rol-label { background: rgba(30,39,46,0.85); color: #ecf0f1; border: none; font-size: 0.75rem; padding: 2px 6px; }
+        input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
 </head>
-
 <body>
+    <div id="app-container">
+        <div id="sidebar">
+            <h2>MiniGIS Operaciones</h2>
+            <div class="section">
+                <h3>Visualización</h3>
+                <label class="control-group">
+                    <input type="checkbox" id="togglePredios" checked> Mostrar Predios 2026
+                </label>
+                <label class="control-group">
+                    <input type="checkbox" id="toggleRol"> Mostrar Rol
+                </label>
+            </div>
+            <div class="section">
+                <h3>Historial de Zoom</h3>
+                <div class="control-group">
+                    <button class="nav-btn" onclick="navegarHistorial(-1)">◀ Atrás</button>
+                    <button class="nav-btn" onclick="navegarHistorial(1)">Adelante ▶</button>
+                </div>
+            </div>
+            <div class="section">
+                <h3>Detalle</h3>
+                <div id="info-panel">Haga clic en un predio.</div>
+            </div>
+        </div>
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([-27.361, -70.335], 13);
 
-<div id="app-container">
+        // Capas Base
+        const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-<div id="sidebar">
+        // Selector de Capas Base
+        L.control.layers({"Calles": streets, "Satélite": satellite}).addTo(map);
 
-<h2>MiniGIS PRO</h2>
+        let capaPredios;
+        let historialZooms = [];
+        let indiceActual = -1;
 
-<div class="section">
-<h3>Visualización</h3>
-<label><input type="checkbox" id="togglePredios" checked> Predios 2026</label>
-</div>
+        // Carga de Capa
+        fetch('https://pub-b33115009b234c46b16cdb73cb03b40c.r2.dev/miniGIS/predios_2026_geojson.geojson')
+            .then(res => res.json())
+            .then(data => {
+                capaPredios = L.geoJSON(data, {
+                    style: { color: "#2ecc71", fillColor: "#2ecc71", weight: 2, fillOpacity: 0.4 },
+                    onEachFeature: (feature, layer) => {
+                        const rol = feature.properties.Nom_Layer ?? 'Sin Rol';
+                        layer.bindTooltip(rol, {
+                            permanent: true,
+                            direction: 'center',
+                            className: 'rol-label'
+                        });
+                        layer.closeTooltip();
 
-<div class="section">
-<h3>Filtro Destino</h3>
-<select id="filtroDestino">
-<option value="">Todos</option>
-<option value="INSTALACIONES MINA">Instalaciones</option>
-<option value="AGRÍCOLA">Agrícola</option>
-<option value="SIN USO">Sin uso</option>
-</select>
-</div>
+                        layer.on('click', (e) => {
+                            guardarVista(layer.getBounds());
+                            map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                            let htmlInfo = `<strong>Información del Predio</strong><br><br>`;
+                            for (let key in feature.properties) {
+                                htmlInfo += `<b>${key}:</b> ${feature.properties[key]}<br>`;
+                            }
+                            document.getElementById('info-panel').innerHTML = htmlInfo;
+                        });
+                    }
+                }).addTo(map);
+                map.fitBounds(capaPredios.getBounds());
 
-<div class="section">
-<h3>Buscar</h3>
-<input type="text" id="buscador" placeholder="Propietario o texto...">
-</div>
-
-<div class="section">
-<h3>Historial</h3>
-<button class="nav-btn" onclick="navegarHistorial(-1)">◀ Atrás</button>
-<button class="nav-btn" onclick="navegarHistorial(1)">Adelante ▶</button>
-</div>
-
-<div class="section">
-<h3>Detalle</h3>
-<div id="info-panel">Clic en un predio</div>
-</div>
-
-<div class="section">
-<h3>Leyenda</h3>
-<div><span class="legend-box" style="background:#e67e22"></span>Instalaciones</div>
-<div><span class="legend-box" style="background:#27ae60"></span>Agrícola</div>
-<div><span class="legend-box" style="background:#7f8c8d"></span>Sin uso</div>
-</div>
-
-</div>
-
-<div id="map"></div>
-
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-
-const map = L.map('map').setView([-27.361, -70.335], 13);
-
-const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-
-L.control.layers({"Calles": osm, "Satélite": sat}).addTo(map);
-
-let capaPredios;
-let historial = [];
-let idx = -1;
-
-function colorDestino(d){
-    if (d === "INSTALACIONES MINA") return "#e67e22";
-    if (d === "AGRÍCOLA") return "#27ae60";
-    if (d === "SIN USO") return "#7f8c8d";
-    return "#2ecc71";
-}
-
-function formatear(p){
-    return `
-    <b>Propietario:</b> ${p.PROPIET || '-'}<br>
-    <b>Superficie:</b> ${p.SUPERF ? Number(p.SUPERF).toFixed(2)+' ha' : '-'}<br>
-    <b>Destino:</b> ${p.DESTINO || '-'}<br>
-    <b>Sector:</b> ${p.SECTOR || '-'}<br>
-    <br>
-    ${p.HV2 ? `<a href="${p.HV2ta</a>` : ''}
-    `;
-}
-
-fetch('https://pub-b33115009b234c46b16cdb73cb03b40c.r2.dev/miniGIS/predios_2026_geojson.geojson')
-.then(r=>r.json())
-.then(data=>{
-
-    capaPredios = L.geoJSON(data, {
-
-        style:(f)=>({
-            color: colorDestino(f.properties.DESTINO),
-            fillColor: colorDestino(f.properties.DESTINO),
-            weight: 2,
-            fillOpacity: 0.4
-        }),
-
-        onEachFeature:(f,layer)=>{
-
-            layer.bindTooltip(f.properties.PROPIET || "Predio");
-
-            layer.on('mouseover', ()=> layer.setStyle({weight:4}));
-            layer.on('mouseout', ()=> capaPredios.resetStyle(layer));
-
-            layer.on('click', ()=>{
-                guardar(layer.getBounds());
-                map.fitBounds(layer.getBounds());
-                document.getElementById('info-panel').innerHTML = formatear(f.properties);
+                // Si la capa de predios arranca visible, habilita el toggle de Rol
+                document.getElementById('toggleRol').disabled = !document.getElementById('togglePredios').checked;
             });
+
+        // Toggle ON/OFF de la capa de predios
+        document.getElementById('togglePredios').addEventListener('change', (e) => {
+            if (capaPredios) {
+                e.target.checked ? map.addLayer(capaPredios) : map.removeLayer(capaPredios);
+            }
+            const toggleRol = document.getElementById('toggleRol');
+            toggleRol.disabled = !e.target.checked;
+            if (!e.target.checked) {
+                toggleRol.checked = false;
+                if (capaPredios) capaPredios.eachLayer(l => l.closeTooltip());
+            }
+        });
+
+        // Toggle ON/OFF de las etiquetas de Rol
+        document.getElementById('toggleRol').addEventListener('change', (e) => {
+            if (!capaPredios) return;
+            capaPredios.eachLayer(layer => {
+                e.target.checked ? layer.openTooltip() : layer.closeTooltip();
+            });
+        });
+
+        // Historial
+        function guardarVista(bounds) {
+            historialZooms = historialZooms.slice(0, indiceActual + 1);
+            historialZooms.push(bounds);
+            indiceActual++;
         }
-
-    }).addTo(map);
-
-    map.fitBounds(capaPredios.getBounds());
-});
-
-function guardar(b){
-    historial = historial.slice(0, idx+1);
-    historial.push(b);
-    idx++;
-}
-
-function navegarHistorial(d){
-    let n = idx + d;
-    if(n>=0 && n<historial.length){
-        idx = n;
-        map.fitBounds(historial[idx]);
-    }
-}
-
-document.getElementById('togglePredios').onchange = e=>{
-    if(!capaPredios) return;
-    e.target.checked ? map.addLayer(capaPredios) : map.removeLayer(capaPredios);
-};
-
-document.getElementById('filtroDestino').onchange = e=>{
-    const val = e.target.value;
-    capaPredios.eachLayer(l=>{
-        const ok = !val || l.feature.properties.DESTINO === val;
-        l.setStyle({fillOpacity: ok?0.4:0, opacity: ok?1:0});
-    });
-};
-
-document.getElementById('buscador').onkeyup = e=>{
-    const txt = e.target.value.toLowerCase();
-
-    capaPredios.eachLayer(l=>{
-        const props = l.feature.properties;
-        const match =
-            (props.PROPIET || '').toLowerCase().includes(txt) ||
-            (props.DESTINO || '').toLowerCase().includes(txt);
-
-        l.setStyle({fillOpacity: match?0.4:0, opacity: match?1:0});
-    });
-};
-
-</script>
-
+        function navegarHistorial(dir) {
+            let nuevoIndice = indiceActual + dir;
+            if (nuevoIndice >= 0 && nuevoIndice < historialZooms.length) {
+                indiceActual = nuevoIndice;
+                map.fitBounds(historialZooms[indiceActual]);
+            }
+        }
+    </script>
 </body>
 </html>
