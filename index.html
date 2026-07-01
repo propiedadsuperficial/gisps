@@ -2,673 +2,151 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>GIS PS - Predios Pucobre</title>
-
-    <!-- Leaflet CSS -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin=""
-    />
-
+    <title>MiniGIS - Operaciones Pucobre</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body,
-        html {
-            height: 100%;
-            overflow: hidden;
-        }
-
-        #app-container {
-            display: flex;
-            width: 100%;
-            height: 100%;
-        }
-
-        #sidebar {
-            width: 340px;
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 20px;
-            z-index: 1000;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.25);
-            overflow-y: auto;
-        }
-
-        #map-container {
-            flex-grow: 1;
-            position: relative;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            background: #e5e5e5;
-        }
-
-        h2 {
-            font-size: 1.25rem;
-            margin-bottom: 20px;
-            color: #ffffff;
-        }
-
-        h3 {
-            font-size: 0.85rem;
-            color: #bdc3c7;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .section {
-            margin-bottom: 25px;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 15px;
-        }
-
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-
-        .nav-btn {
-            background: #34495e;
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-            flex: 1;
-        }
-
-        .nav-btn:hover {
-            background: #3498db;
-        }
-
-        #info-panel {
-            background: #1e272e;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            max-height: 520px;
-            overflow-y: auto;
-            line-height: 1.35;
-        }
-
-        .info-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #ffffff;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 8px;
-        }
-
-        .info-row {
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .info-label {
-            display: block;
-            font-weight: 700;
-            color: #95a5a6;
-            margin-bottom: 2px;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-        }
-
-        .info-value {
-            display: block;
-            color: #ecf0f1;
-            word-break: break-word;
-        }
-
-        .expediente-btn {
-            display: inline-block;
-            margin-top: 4px;
-            background: #27ae60;
-            color: #ffffff !important;
-            padding: 7px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.82rem;
-        }
-
-        .expediente-btn:hover {
-            background: #2ecc71;
-        }
-
-        .rol-label {
-            background: rgba(30,39,46,0.85);
-            color: #ecf0f1;
-            border: none;
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        input[type="checkbox"]:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .status-msg {
-            color: #bdc3c7;
-            font-style: italic;
-        }
-
-        .leaflet-control-layers {
-            font-size: 0.85rem;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body, html { height: 100%; overflow: hidden; }
+        #app-container { display: flex; width: 100%; height: 100%; }
+        #sidebar { width: 320px; background-color: #2c3e50; color: #ecf0f1; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.2); }
+        #map-container { flex-grow: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+.section { margin-bottom: 25px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
+        h3 { font-size: 0.9rem; color: #bdc3c7; margin-bottom: 10px; text-transform: uppercase; }
+.control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nav-btn { background: #34495e; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; flex: 1; }
+.nav-btn:hover { background: #3498db; }
+        #info-panel { background: #1e272e; padding: 10px; border-radius: 4px; font-size: 0.85rem; max-height: 400px; overflow-y: auto; }
+        .rol-label { background: rgba(30,39,46,0.85); color: #ecf0f1; border: none; font-size: 0.75rem; padding: 2px 6px; }
+        input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+        #info-panel a { color: #3498db; text-decoration: none; font-weight: bold; }
+        #info-panel a:hover { text-decoration: underline; }
+        #info-panel div { padding: 3px 0; border-bottom: 1px solid #2c3540; }
     </style>
 </head>
-
 <body>
     <div id="app-container">
-
         <div id="sidebar">
-            <h2>GIS PS - Predios Pucobre</h2>
-
+            <h2>MiniGIS Operaciones</h2>
             <div class="section">
                 <h3>Visualización</h3>
-
                 <label class="control-group">
-                    <input type="checkbox" id="togglePredios" checked>
-                    Mostrar Predios 2026
+                    <input type="checkbox" id="togglePredios" checked> Mostrar Predios 2026
                 </label>
-
                 <label class="control-group">
-                    <input type="checkbox" id="toggleRol">
-                    Mostrar Rol
+                    <input type="checkbox" id="toggleRol"> Mostrar Rol
                 </label>
             </div>
-
             <div class="section">
                 <h3>Historial de Zoom</h3>
-
                 <div class="control-group">
                     <button class="nav-btn" onclick="navegarHistorial(-1)">◀ Atrás</button>
                     <button class="nav-btn" onclick="navegarHistorial(1)">Adelante ▶</button>
                 </div>
             </div>
-
             <div class="section">
                 <h3>Detalle</h3>
-                <div id="info-panel">
-                    <span class="status-msg">Haga clic en un predio.</span>
-                </div>
+                <div id="info-panel">Haga clic en un predio.</div>
             </div>
         </div>
-
         <div id="map-container">
             <div id="map"></div>
         </div>
-
     </div>
-
-    <!-- Leaflet JS -->
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin="">
-    </script>
-
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // =====================================================
-        // CONFIGURACIÓN GENERAL
-        // =====================================================
-
         const map = L.map('map').setView([-27.361, -70.335], 13);
 
-        const streets = L.tileLayer(
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            {
-                maxZoom: 22,
-                attribution: 'OpenStreetMap'
-            }
-        ).addTo(map);
+        // Capas Base
+        const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-        const satellite = L.tileLayer(
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            {
-                maxZoom: 22,
-                attribution: 'Esri World Imagery'
-            }
-        );
-
-        L.control.layers({
-            "Calles": streets,
-            "Satélite": satellite
-        }).addTo(map);
+        // Selector de Capas Base
+        L.control.layers({"Calles": streets, "Satélite": satellite}).addTo(map);
 
         let capaPredios;
         let historialZooms = [];
         let indiceActual = -1;
 
-        const URL_GEOJSON = 'https://pub-b33115009b234c46b16cdb73cb03b40c.r2.dev/miniGIS/predios_2026_geojson.geojson';
-
-
-        // =====================================================
-        // ALIAS / NOMBRES LIMPIOS DE CAMPOS
-        // =====================================================
-
-        const aliasCampos = {
-            "OBJECTID": "ID Objeto",
-            "objectid": "ID Objeto",
-            "fid": "ID",
-            "FID": "ID",
-
-            "id": "ID",
-            "ID": "ID",
-            "id_unico": "ID Único",
-            "ID_UNICO": "ID Único",
-            "codigo": "Código",
-            "CODIGO": "Código",
-
-            "rol": "Rol",
-            "ROL": "Rol",
-            "Rol": "Rol",
-            "rol_sii": "Rol SII",
-            "ROL_SII": "Rol SII",
-            "Nom_Layer": "Rol",
-            "nom_layer": "Rol",
-            "NOM_LAYER": "Rol",
-
-            "predio": "Predio",
-            "PREDIO": "Predio",
-            "nombre": "Nombre",
-            "NOMBRE": "Nombre",
-            "nombre_predio": "Nombre Predio",
-            "NOMBRE_PREDIO": "Nombre Predio",
-            "nom_predio": "Nombre Predio",
-            "NOM_PREDIO": "Nombre Predio",
-
-            "propietario": "Propietario",
-            "PROPIETARIO": "Propietario",
-            "titular": "Titular",
-            "TITULAR": "Titular",
-
-            "comuna": "Comuna",
-            "COMUNA": "Comuna",
-            "sector": "Sector",
-            "SECTOR": "Sector",
-            "region": "Región",
-            "REGION": "Región",
-            "provincia": "Provincia",
-            "PROVINCIA": "Provincia",
-
-            "superficie": "Superficie",
-            "SUPERFICIE": "Superficie",
-            "sup": "Superficie",
-            "SUP": "Superficie",
-            "sup_ha": "Superficie ha",
-            "SUP_HA": "Superficie ha",
-            "hectareas": "Hectáreas",
-            "HECTAREAS": "Hectáreas",
-            "area": "Área",
-            "AREA": "Área",
-
-            "estado": "Estado",
-            "ESTADO": "Estado",
-            "tipo": "Tipo",
-            "TIPO": "Tipo",
-            "uso": "Uso",
-            "USO": "Uso",
-
-            "observacion": "Observación",
-            "OBSERVACION": "Observación",
-            "observaciones": "Observaciones",
-            "OBSERVACIONES": "Observaciones",
-            "obs": "Observaciones",
-            "OBS": "Observaciones",
-
-            "url": "Expediente",
-            "URL": "Expediente",
-            "link": "Expediente",
-            "LINK": "Expediente",
-            "enlace": "Expediente",
-            "ENLACE": "Expediente",
-            "expediente": "Expediente",
-            "EXPEDIENTE": "Expediente",
-            "url_expediente": "Expediente",
-            "URL_EXPEDIENTE": "Expediente",
-            "expediente_sp": "Expediente",
-            "EXPEDIENTE_SP": "Expediente",
-            "sharepoint": "Expediente",
-            "SHAREPOINT": "Expediente",
-            "url_sharepoint": "Expediente",
-            "URL_SHAREPOINT": "Expediente"
-        };
-
-
-        // =====================================================
-        // FUNCIONES AUXILIARES
-        // =====================================================
-
-        function limpiarNombreCampo(campo) {
-            if (aliasCampos[campo]) {
-                return aliasCampos[campo];
-            }
-
-            return String(campo)
-                .replace(/^ps_/i, '')
-                .replace(/^predios_/i, '')
-                .replace(/^predio_/i, '')
-                .replace(/^gis_/i, '')
-                .replace(/^attr_/i, '')
-                .replace(/_/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .replace(/\w\S*/g, txt => {
-                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-                });
+        // Limpia prefijos comunes tipo "Nom_", "Cod_", "Fec_", "Sup_", "Rol_", etc.
+        // y da formato legible al nombre del campo (espacios, capitalización)
+        function formatFieldName(key) {
+            let clean = key.replace(/^[A-Za-z]{2,5}_/, '');
+            if (!clean) clean = key; // si el key entero era el prefijo, no lo dejes vacío
+            clean = clean.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+            return clean.charAt(0).toUpperCase() + clean.slice(1);
         }
 
-        function escapeHTML(value) {
-            if (value === null || value === undefined) return '';
-
-            return String(value)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function esURL(valor) {
-            if (!valor) return false;
-            const texto = String(valor).trim().toLowerCase();
-            return texto.startsWith('http://') || texto.startsWith('https://');
-        }
-
-        function esCampoExpediente(campo, valor) {
-            const c = String(campo).toLowerCase();
-
-            if (
-                c.includes('expediente') ||
-                c.includes('sharepoint') ||
-                c.includes('url') ||
-                c.includes('link') ||
-                c.includes('enlace') ||
-                c.includes('onedrive')
-            ) {
-                return true;
-            }
-
-            if (esURL(valor) && String(valor).toLowerCase().includes('sharepoint')) {
-                return true;
-            }
-
-            return false;
-        }
-
-        function obtenerValorCampo(properties, candidatos) {
-            for (const campo of candidatos) {
-                if (
-                    properties[campo] !== undefined &&
-                    properties[campo] !== null &&
-                    String(properties[campo]).trim() !== ''
-                ) {
-                    return properties[campo];
-                }
-            }
-            return null;
-        }
-
-        function obtenerRol(properties) {
-            return obtenerValorCampo(properties, [
-                'rol',
-                'ROL',
-                'Rol',
-                'rol_sii',
-                'ROL_SII',
-                'Nom_Layer',
-                'nom_layer',
-                'NOM_LAYER'
-            ]) || 'Sin Rol';
-        }
-
-        function obtenerTituloPredio(properties) {
-            const rol = obtenerRol(properties);
-
-            const nombre = obtenerValorCampo(properties, [
-                'nombre_predio',
-                'NOMBRE_PREDIO',
-                'nom_predio',
-                'NOM_PREDIO',
-                'predio',
-                'PREDIO',
-                'nombre',
-                'NOMBRE'
-            ]);
-
-            if (nombre && String(nombre).trim() !== String(rol).trim()) {
-                return `${escapeHTML(rol)} - ${escapeHTML(nombre)}`;
-            }
-
-            return escapeHTML(rol);
-        }
-
-        function construirPanelInfo(properties) {
-            let htmlInfo = `
-                <div class="info-title">
-                    ${obtenerTituloPredio(properties)}
-                </div>
-            `;
-
-            const camposOmitidos = new Set([
-                'Shape_Leng',
-                'Shape_Area',
-                'shape_leng',
-                'shape_area',
-                'geometry',
-                'geom'
-            ]);
-
-            for (let key in properties) {
-                if (!Object.prototype.hasOwnProperty.call(properties, key)) continue;
-                if (camposOmitidos.has(key)) continue;
-
-                const valor = properties[key];
-
-                if (
-                    valor === null ||
-                    valor === undefined ||
-                    String(valor).trim() === ''
-                ) {
-                    continue;
-                }
-
-                const nombreLimpio = limpiarNombreCampo(key);
-
-                if (esCampoExpediente(key, valor) && esURL(valor)) {
-                    htmlInfo += `
-                        <div class="info-row">
-                            <span class="info-label">${escapeHTML(nombreLimpio)}</span>
-                            <span class="info-value">
-                                <a class="expediente-btn"
-                                   href="${escapeHTML(valor)}"
-                                   target="_blank"
-                                   rel="noopener noreferrer                          <a class="expediente-btn"
-                                   href="${escapeHTML(valor)}"
-                                   target="_blank"
-                                   rel="noopener noreferrer             } else {
-                    htmlInfo += `
-                        <div class="info-row">
-                            <span class="info-label">${escapeHTML(nombreLimpio)}</span>
-                            <span class="info-value">${escapeHTML(valor)}</span>
-                        </div>
-                    `;
-                }
-            }
-
-            return htmlInfo;
-        }
-
-
-        // =====================================================
-        // CARGA DE GEOJSON
-        // =====================================================
-
-        fetch(URL_GEOJSON)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('No se pudo cargar el GeoJSON.');
-                }
-                return res.json();
-            })
+        // Carga de Capa
+        fetch('https://pub-b33115009b234c46b16cdb73cb03b40c.r2.dev/miniGIS/predios_2026_geojson.geojson')
+            .then(res => res.json())
             .then(data => {
                 capaPredios = L.geoJSON(data, {
-                    style: function(feature) {
-                        return {
-                            color: "#2ecc71",
-                            fillColor: "#2ecc71",
-                            weight: 2,
-                            fillOpacity: 0.4
-                        };
-                    },
-
-                    onEachFeature: function(feature, layer) {
-                        const properties = feature.properties || {};
-                        const rol = obtenerRol(properties);
-
-                        layer.bindTooltip(String(rol), {
+                    style: { color: "#2ecc71", fillColor: "#2ecc71", weight: 2, fillOpacity: 0.4 },
+                    onEachFeature: (feature, layer) => {
+                        const rol = feature.properties.Nom_Layer ?? 'Sin Rol';
+                        layer.bindTooltip(rol, {
                             permanent: true,
                             direction: 'center',
                             className: 'rol-label'
                         });
-
                         layer.closeTooltip();
 
-                        layer.on('mouseover', function() {
-                            layer.setStyle({
-                                color: "#f1c40f",
-                                fillColor: "#f1c40f",
-                                weight: 3,
-                                fillOpacity: 0.5
-                            });
-                        });
-
-                        layer.on('mouseout', function() {
-                            capaPredios.resetStyle(layer);
-                        });
-
-                        layer.on('click', function() {
+                        layer.on('click', (e) => {
                             guardarVista(layer.getBounds());
-
-                            map.fitBounds(layer.getBounds(), {
-                                padding: [50, 50]
-                            });
-
-                            document.getElementById('info-panel').innerHTML =
-                                construirPanelInfo(properties);
+                            map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                            let htmlInfo = `<strong>Información del Predio</strong><br><br>`;
+                            for (let key in feature.properties) {
+                                const value = feature.properties[key];
+                                const esUrl = typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+                                if (esUrl) {
+                                    htmlInfo += `<div><b>Expediente:</b> <a href="${value}" target="_blank" rel="noopener noreferrer">Ver expediente</a></div>`;
+                                } else {
+                                    htmlInfo += `<div><b>${formatFieldName(key)}:</b> ${value}</div>`;
+                                }
+                            }
+                            document.getElementById('info-panel').innerHTML = htmlInfo;
                         });
                     }
                 }).addTo(map);
+                map.fitBounds(capaPredios.getBounds());
 
-                if (capaPredios.getBounds().isValid()) {
-                    map.fitBounds(capaPredios.getBounds(), {
-                        padding: [30, 30]
-                    });
-                }
-
-                document.getElementById('toggleRol').disabled =
-                    !document.getElementById('togglePredios').checked;
-
-                map.invalidateSize();
-            })
-            .catch(error => {
-                console.error(error);
-
-                document.getElementById('info-panel').innerHTML = `
-                    <div class="info-title">Error de carga</div>
-                    <div class="info-row">
-                        <span class="info-value">
-                            No fue posible cargar la capa de predios.
-                            Revise la URL del GeoJSON o permisos CORS.
-                        </span>
-                    </div>
-                `;
+                // Si la capa de predios arranca visible, habilita el toggle de Rol
+                document.getElementById('toggleRol').disabled = !document.getElementById('togglePredios').checked;
             });
 
-
-        // =====================================================
-        // TOGGLE CAPA PREDIOS
-        // =====================================================
-
-        document.getElementById('togglePredios').addEventListener('change', function(e) {
+        // Toggle ON/OFF de la capa de predios
+        document.getElementById('togglePredios').addEventListener('change', (e) => {
             if (capaPredios) {
-                if (e.target.checked) {
-                    map.addLayer(capaPredios);
-                } else {
-                    map.removeLayer(capaPredios);
-                }
+                e.target.checked ? map.addLayer(capaPredios) : map.removeLayer(capaPredios);
             }
-
             const toggleRol = document.getElementById('toggleRol');
             toggleRol.disabled = !e.target.checked;
-
             if (!e.target.checked) {
                 toggleRol.checked = false;
-
-                if (capaPredios) {
-                    capaPredios.eachLayer(function(layer) {
-                        layer.closeTooltip();
-                    });
-                }
+                if (capaPredios) capaPredios.eachLayer(l => l.closeTooltip());
             }
         });
 
-
-        // =====================================================
-        // TOGGLE ETIQUETAS ROL
-        // =====================================================
-
-        document.getElementById('toggleRol').addEventListener('change', function(e) {
+        // Toggle ON/OFF de las etiquetas de Rol
+        document.getElementById('toggleRol').addEventListener('change', (e) => {
             if (!capaPredios) return;
-
-            capaPredios.eachLayer(function(layer) {
-                if (e.target.checked) {
-                    layer.openTooltip();
-                } else {
-                    layer.closeTooltip();
-                }
+            capaPredios.eachLayer(layer => {
+                e.target.checked ? layer.openTooltip() : layer.closeTooltip();
             });
         });
 
-
-        // =====================================================
-        // HISTORIAL DE ZOOM
-        // =====================================================
-
+        // Historial
         function guardarVista(bounds) {
             historialZooms = historialZooms.slice(0, indiceActual + 1);
             historialZooms.push(bounds);
             indiceActual++;
         }
-
         function navegarHistorial(dir) {
-            const nuevoIndice = indiceActual + dir;
-
+            let nuevoIndice = indiceActual + dir;
             if (nuevoIndice >= 0 && nuevoIndice < historialZooms.length) {
                 indiceActual = nuevoIndice;
-                map.fitBounds(historialZooms[indiceActual], {
-                    padding: [50, 50]
-                });
+                map.fitBounds(historialZooms[indiceActual]);
             }
         }
     </script>
