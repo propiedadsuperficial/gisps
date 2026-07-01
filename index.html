@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>GIS PS - Predios Pucobre</title>
 
+    <!-- Leaflet CSS -->
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -49,6 +50,7 @@
         #map {
             width: 100%;
             height: 100%;
+            background: #e5e5e5;
         }
 
         h2 {
@@ -168,6 +170,10 @@
             color: #bdc3c7;
             font-style: italic;
         }
+
+        .leaflet-control-layers {
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 
@@ -214,7 +220,12 @@
 
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="">
+    </script>
 
     <script>
         // =====================================================
@@ -270,10 +281,12 @@
 
             "rol": "Rol",
             "ROL": "Rol",
+            "Rol": "Rol",
             "rol_sii": "Rol SII",
             "ROL_SII": "Rol SII",
             "Nom_Layer": "Rol",
             "nom_layer": "Rol",
+            "NOM_LAYER": "Rol",
 
             "predio": "Predio",
             "PREDIO": "Predio",
@@ -351,7 +364,7 @@
                 return aliasCampos[campo];
             }
 
-            return campo
+            return String(campo)
                 .replace(/^ps_/i, '')
                 .replace(/^predios_/i, '')
                 .replace(/^predio_/i, '')
@@ -490,9 +503,7 @@
                                 <a class="expediente-btn"
                                    href="${escapeHTML(valor)}"
                                    target="_blank"
-                                   rel="noopener noreferrerlabel">${escapeHTML(nombreLimpio)}</span>
-                            <span class="info-value">
-                                <a class="expediente-btn"
+                                   rel="noopener noreferrer                          <a class="expediente-btn"
                                    href="${escapeHTML(valor)}"
                                    target="_blank"
                                    rel="noopener noreferrer             } else {
@@ -556,7 +567,7 @@
                             capaPredios.resetStyle(layer);
                         });
 
-                        layer.on('click', function(e) {
+                        layer.on('click', function() {
                             guardarVista(layer.getBounds());
 
                             map.fitBounds(layer.getBounds(), {
@@ -570,11 +581,15 @@
                 }).addTo(map);
 
                 if (capaPredios.getBounds().isValid()) {
-                    map.fitBounds(capaPredios.getBounds());
+                    map.fitBounds(capaPredios.getBounds(), {
+                        padding: [30, 30]
+                    });
                 }
 
                 document.getElementById('toggleRol').disabled =
                     !document.getElementById('togglePredios').checked;
+
+                map.invalidateSize();
             })
             .catch(error => {
                 console.error(error);
@@ -584,6 +599,7 @@
                     <div class="info-row">
                         <span class="info-value">
                             No fue posible cargar la capa de predios.
+                            Revise la URL del GeoJSON o permisos CORS.
                         </span>
                     </div>
                 `;
