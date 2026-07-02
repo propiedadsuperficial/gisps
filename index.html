@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>MiniGIS - Operaciones Pucobre</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body, html { height: 100%; overflow: hidden; }
+        #app-container { display: flex; width: 100%; height: 100%; }
+        #sidebar { width: 320px; background-color: #2c3e50; color: #ecf0f1; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.2); overflow-y: auto; }
+        #map-container { flex-grow: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+        .section { margin-bottom: 25px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
+        h3 { font-size: 0.9rem; color: #bdc3c7; margin-bottom: 10px; text-transform: uppercase; }
+        .control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .nav-btn { background: #34495e; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; flex: 1; }
+        .nav-btn:hover { background: #3498db; }
+        .rol-label { background: rgba(30,39,46,0.85); color: #ecf0f1; border: none; font-size: 0.75rem; padding: 2px 6px; }
+        input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Listas dinámicas: accesos directos y capas */
+        .lista-scroll { max-height: 220px; overflow-y: auto; padding-right: 4px; }
+        .opcion-item { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+        .opcion-item:hover { background: #34495e; }
+        .opcion-item input { flex-shrink: 0; cursor: pointer; }
+        .opcion-item label { cursor: pointer; flex: 1; }
+        .opcion-item .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+        .placeholder-texto { font-size: 0.8rem; color: #7f8c8d; padding: 4px; }
+
+        /* Ventana flotante de información */
+        #floating-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            max-height: 70%;
+            background: #1e272e;
+            color: #ecf0f1;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            z-index: 1200;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #floating-panel-header {
+            background: #2c3e50;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+        #floating-panel-header span { font-weight: bold; font-size: 0.9rem; }
+        #floating-panel-close {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 1.1rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        #floating-panel-close:hover { background: #e74c3c; }
+        #floating-panel-body {
+            padding: 12px;
+            font-size: 0.85rem;
+            overflow-y: auto;
+        }
+        #floating-panel-body div { padding: 3px 0; border-bottom: 1px solid #2c3540; }
+        #floating-panel-body a { color: #3498db; text-decoration: none; font-weight: bold; }
+        #floating-panel-body a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="sidebar">
+            <h2>MiniGIS Operaciones</h2>
+
+            <div class="section">
+                <h3>Accesos Directos - Faenas</h3>
+                <div id="lista-faenas" class="lista-scroll">
+                    <div class="placeholder-texto">Cargando faenas...</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Capas</h3>
+                <div id="lista-capas" class="lista-scroll">
+                    <div class="placeholder-texto">Cargando capas...</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Historial de Zoom</h3>
+                <div class="control-group">
+                    <button class="nav-btn" onclick="navegarHistorial(-1)">◀ Atrás</button>
+                    <button class="nav-btn" onclick="navegarHistorial(1)">Adelante ▶</button>
+                </div>
+            </div>
+        </div>
+        <div id="map-container">
+            <div id="map"></div>
+            <div id="floating-panel">
+                <div id="floating-panel-header">
+                    <span id="floating-panel-title">Información del Predio</span>
+                    <button id="floating-panel-close" onclick="cerrarVentanaFlotante()">✕</button>
+                </div>
+                <div id="floating-panel-body"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // =====================================================================
+        // CONFIGURACIÓN
+        // =====================================================================
+        // Los archivos de configuración (config_capas.json y config_faenas.json)
+        // se leen desde /capas/ del repositorio de GitHub.
+        // El campo "archivo" de cada capa en config_capas.json puede ser:
+        //   - un nombre relativo (ej. "predios.geojson") -> se busca en /capas/ de GitHub
+        //   - una URL completa (ej. un objeto público de Cloudflare R2) -> se usa tal cual
+        const GITHUB_USER = 'propiedadsuperficial';
+        const GITHUB_REPO = 'gisps';
+        const GITHUB_BRANCH = 'main';
+        const CONFIG_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/capas/`;
+
+        function resolverUrlArchivo(archivo) {
+            return /^https?:\/\//i.test(archivo) ? archivo : CONFIG_BASE_URL + archivo;
+        }
+
+        const map = L.map('map').setView([-27.361, -70.335], 13);
+
+        // Capas Base
+        const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        L.control.layers({"Calles": streets, "Satélite": satellite}).addTo(map);
+
+        // Estado
+        const capasCargadas = {};      // id -> { layer: L.geoJSON, config: {...} }
+        let historialVistas = [];      // cada entrada: {type:'bounds', bounds} | {type:'center', lat, lng, zoom}
+        let indiceActual = -1;
+
+        // ---------------------------------------------------------------
+        // Utilidades de formato (compartidas por la ventana flotante)
+        // ---------------------------------------------------------------
+        function formatFieldName(key) {
+            let clean = key.replace(/^[A-Za-z]{2,5}_/, '');
+            if (!clean) clean = key;
+            clean = clean.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+            return clean.charAt(0).toUpperCase() + clean.slice(1);
+        }
+
+        function construirHtmlPropiedades(feature) {
+            let html = '';
+            for (let key in feature.properties) {
+                const value = feature.properties[key];
+                const esUrl = typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+                if (esUrl) {
+                    html += `<div><b>Expediente:</b> <a href="${value}" target="_blank" rel="noopener noreferrer">Ver expediente</a></div>`;
+                } else {
+                    html += `<div><b>${formatFieldName(key)}:</b> ${value}</div>`;
+                }
+            }
+            return html;
+        }
+
+        // ---------------------------------------------------------------
+        // Ventana flotante de información
+        // ---------------------------------------------------------------
+        const panelFlotante = document.getElementById('floating-panel');
+        const panelFlotanteBody = document.getElementById('floating-panel-body');
+        const panelFlotanteTitulo = document.getElementById('floating-panel-title');
+        const panelFlotanteHeader = document.getElementById('floating-panel-header');
+
+        function abrirVentanaFlotante(feature, tituloCapa) {
+            panelFlotanteTitulo.textContent = tituloCapa || 'Información del Predio';
+            panelFlotanteBody.innerHTML = construirHtmlPropiedades(feature);
+            panelFlotante.style.display = 'flex';
+        }
+
+        function cerrarVentanaFlotante() {
+            panelFlotante.style.display = 'none';
+        }
+
+        // Arrastrar la ventana flotante desde su encabezado
+        (function habilitarArrastre() {
+            let arrastrando = false, offsetX = 0, offsetY = 0;
+            panelFlotanteHeader.addEventListener('mousedown', (e) => {
+                arrastrando = true;
+                const rect = panelFlotante.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                panelFlotante.style.right = 'auto';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!arrastrando) return;
+                const contRect = document.getElementById('map-container').getBoundingClientRect();
+                let left = e.clientX - contRect.left - offsetX;
+                let top = e.clientY - contRect.top - offsetY;
+                left = Math.max(0, Math.min(left, contRect.width - panelFlotante.offsetWidth));
+                top = Math.max(0, Math.min(top, contRect.height - panelFlotante.offsetHeight));
+                panelFlotante.style.left = left + 'px';
+                panelFlotante.style.top = top + 'px';
+            });
+            document.addEventListener('mouseup', () => { arrastrando = false; });
+        })();
+
+        // ---------------------------------------------------------------
+        // Historial de vistas (zoom)
+        // ---------------------------------------------------------------
+        function guardarVista(vista) {
+            historialVistas = historialVistas.slice(0, indiceActual + 1);
+            historialVistas.push(vista);
+            indiceActual++;
+        }
+
+        function aplicarVista(vista) {
+            if (vista.type === 'bounds') {
+                map.fitBounds(vista.bounds, { padding: [50, 50] });
+            } else if (vista.type === 'center') {
+                map.setView([vista.lat, vista.lng], vista.zoom);
+            }
+        }
+
+        function navegarHistorial(dir) {
+            let nuevoIndice = indiceActual + dir;
+            if (nuevoIndice >= 0 && nuevoIndice < historialVistas.length) {
+                indiceActual = nuevoIndice;
+                aplicarVista(historialVistas[indiceActual]);
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Capas de información — cargadas desde /capas/config_capas.json
+        // Cada capa define su propio campo de etiqueta (campoEtiqueta).
+        // Encender el checkbox de una capa enciende la geometría Y la
+        // etiqueta automáticamente; apagarlo oculta ambas.
+        // ---------------------------------------------------------------
+        function setCapaVisibilidad(id, activar) {
+            const entrada = capasCargadas[id];
+            if (!entrada) return;
+            if (activar) {
+                map.addLayer(entrada.layer);
+                entrada.layer.eachLayer(l => l.openTooltip());
+            } else {
+                entrada.layer.eachLayer(l => l.closeTooltip());
+                map.removeLayer(entrada.layer);
+            }
+        }
+
+        function cargarCapa(config) {
+            const url = resolverUrlArchivo(config.archivo);
+            return fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const layer = L.geoJSON(data, {
+                        style: {
+                            color: config.color || '#2ecc71',
+                            fillColor: config.color || '#2ecc71',
+                            weight: 2,
+                            fillOpacity: 0.4
+                        },
+                        onEachFeature: (feature, capaFeature) => {
+                            const etiqueta = config.campoEtiqueta
+                                ? (feature.properties[config.campoEtiqueta] ?? 'Sin etiqueta')
+                                : 'Sin etiqueta';
+                            capaFeature.bindTooltip(String(etiqueta), {
+                                permanent: true,
+                                direction: 'center',
+                                className: 'rol-label'
+                            });
+                            capaFeature.closeTooltip();
+
+                            capaFeature.on('click', (e) => {
+                                guardarVista({ type: 'bounds', bounds: capaFeature.getBounds() });
+                                map.fitBounds(capaFeature.getBounds(), { padding: [50, 50] });
+                                abrirVentanaFlotante(feature, config.nombre);
+                            });
+                        }
+                    });
+                    capasCargadas[config.id] = { layer, config };
+                    if (config.activaPorDefecto) {
+                        setCapaVisibilidad(config.id, true);
+                        const checkbox = document.getElementById('capa-' + config.id);
+                        if (checkbox) checkbox.checked = true;
+                    }
+                })
+                .catch(err => console.error(`Error cargando capa "${config.id}":`, err));
+        }
+
+        function renderizarListaCapas(configs) {
+            const contenedor = document.getElementById('lista-capas');
+            contenedor.innerHTML = '';
+            if (!configs.length) {
+                contenedor.innerHTML = '<div class="placeholder-texto">No hay capas configuradas.</div>';
+                return;
+            }
+            configs.forEach(config => {
+                const item = document.createElement('div');
+                item.className = 'opcion-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="capa-${config.id}">
+                    <span class="swatch" style="background:${config.color || '#2ecc71'}"></span>
+                    <label for="capa-${config.id}">${config.nombre}</label>
+                `;
+                contenedor.appendChild(item);
+
+                const checkbox = item.querySelector('input');
+                checkbox.addEventListener('change', (e) => {
+                    setCapaVisibilidad(config.id, e.target.checked);
+                });
+            });
+        }
+
+        // ---------------------------------------------------------------
+        // Accesos directos — cargados desde /capas/config_faenas.json
+        // Cada acceso define un punto central (lat/lng) y una escala (zoom).
+        // ---------------------------------------------------------------
+        function renderizarListaFaenas(faenas) {
+            const contenedor = document.getElementById('lista-faenas');
+            contenedor.innerHTML = '';
+            if (!faenas.length) {
+                contenedor.innerHTML = '<div class="placeholder-texto">No hay faenas configuradas.</div>';
+                return;
+            }
+            faenas.forEach((faena, idx) => {
+                const item = document.createElement('div');
+                item.className = 'opcion-item';
+                const inputId = 'faena-' + idx;
+                item.innerHTML = `
+                    <input type="radio" name="faena" id="${inputId}">
+                    <label for="${inputId}">${faena.nombre}</label>
+                `;
+                contenedor.appendChild(item);
+
+                const radio = item.querySelector('input');
+                radio.addEventListener('change', () => {
+                    if (!radio.checked) return;
+                    const vista = { type: 'center', lat: faena.lat, lng: faena.lng, zoom: faena.zoom || 15 };
+                    guardarVista(vista);
+                    aplicarVista(vista);
+                });
+            });
+        }
+
+        // ---------------------------------------------------------------
+        // Carga inicial de configuración
+        // ---------------------------------------------------------------
+        fetch(CONFIG_BASE_URL + 'config_faenas.json')
+            .then(res => res.json())
+            .then(faenas => renderizarListaFaenas(faenas))
+            .catch(err => {
+                console.error('Error cargando config_faenas.json:', err);
+                document.getElementById('lista-faenas').innerHTML =
+                    '<div class="placeholder-texto">No se pudo cargar el listado de faenas.</div>';
+            });
+
+        fetch(CONFIG_BASE_URL + 'config_capas.json')
+            .then(res => res.json())
+            .then(configs => {
+                renderizarListaCapas(configs);
+                return Promise.all(configs.map(cargarCapa));
+            })
+            .catch(err => {
+                console.error('Error cargando config_capas.json:', err);
+                document.getElementById('lista-capas').innerHTML =
+                    '<div class="placeholder-texto">No se pudo cargar el listado de capas.</div>';
+            });
+    </script>
+</body>
+</html>
