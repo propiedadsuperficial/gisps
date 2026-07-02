@@ -2,7 +2,7 @@
   {
     "id": "predios",
     "nombre": "Predios 2026",
-    "archivo": "predios_2026_geojson.geojson",
+    "archivo": "predios_jul_2026.geojson",
     "campoEtiqueta": "Nom_Layer",
     "color": "#2ecc71",
     "activaPorDefecto": true
