@@ -116,16 +116,21 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // =====================================================================
-        // CONFIGURACIÓN — ajuste estos valores a su repositorio de GitHub
+        // CONFIGURACIÓN
         // =====================================================================
-        // Estructura esperada en el repositorio:
-        //   /capas/config_capas.json     -> catálogo de capas de información
-        //   /capas/config_faenas.json    -> catálogo de accesos directos (faenas)
-        //   /capas/<archivo>.geojson     -> cada capa referenciada en config_capas.json
+        // Los archivos de configuración (config_capas.json y config_faenas.json)
+        // se leen desde /capas/ del repositorio de GitHub.
+        // El campo "archivo" de cada capa en config_capas.json puede ser:
+        //   - un nombre relativo (ej. "predios.geojson") -> se busca en /capas/ de GitHub
+        //   - una URL completa (ej. un objeto público de Cloudflare R2) -> se usa tal cual
         const GITHUB_USER = 'propiedadsuperficial';
         const GITHUB_REPO = 'gisps';
         const GITHUB_BRANCH = 'main';
-        const CAPAS_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/capas/`;
+        const CONFIG_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/capas/`;
+
+        function resolverUrlArchivo(archivo) {
+            return /^https?:\/\//i.test(archivo) ? archivo : CONFIG_BASE_URL + archivo;
+        }
 
         const map = L.map('map').setView([-27.361, -70.335], 13);
 
@@ -248,7 +253,7 @@
         }
 
         function cargarCapa(config) {
-            const url = CAPAS_BASE_URL + config.archivo;
+            const url = resolverUrlArchivo(config.archivo);
             return fetch(url)
                 .then(res => res.json())
                 .then(data => {
@@ -345,7 +350,7 @@
         // ---------------------------------------------------------------
         // Carga inicial de configuración
         // ---------------------------------------------------------------
-        fetch(CAPAS_BASE_URL + 'config_faenas.json')
+        fetch(CONFIG_BASE_URL + 'config_faenas.json')
             .then(res => res.json())
             .then(faenas => renderizarListaFaenas(faenas))
             .catch(err => {
@@ -354,7 +359,7 @@
                     '<div class="placeholder-texto">No se pudo cargar el listado de faenas.</div>';
             });
 
-        fetch(CAPAS_BASE_URL + 'config_capas.json')
+        fetch(CONFIG_BASE_URL + 'config_capas.json')
             .then(res => res.json())
             .then(configs => {
                 renderizarListaCapas(configs);
