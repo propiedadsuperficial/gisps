@@ -2,7 +2,7 @@
   {
     "id": "predios",
     "nombre": "Predios 2026",
-    "archivo": "predios_jul_2026.geojson",
+    "archivo": "https://pub-b33115009b234c46b16cdb73cb03b40c.r2.dev/miniGIS/predios_jul_2026.geojson",
     "campoEtiqueta": "Nom_Layer",
     "color": "#2ecc71",
     "activaPorDefecto": true
