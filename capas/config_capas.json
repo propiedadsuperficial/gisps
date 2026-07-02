@@ -1,0 +1,10 @@
+[
+  {
+    "id": "predios",
+    "nombre": "Predios 2026",
+    "archivo": "predios_2026_geojson.geojson",
+    "campoEtiqueta": "Nom_Layer",
+    "color": "#2ecc71",
+    "activaPorDefecto": true
+  }
+]

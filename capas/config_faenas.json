@@ -1,0 +1,7 @@
+[
+  { "nombre": "Mina Punta del Cobre", "lat": -27.379, "lng": -70.278, "zoom": 16 },
+  { "nombre": "El Escorial", "lat": -27.372, "lng": -70.290, "zoom": 16 },
+  { "nombre": "Planta San José", "lat": -27.386, "lng": -70.275, "zoom": 16 },
+  { "nombre": "Pozo 11", "lat": -27.365, "lng": -70.310, "zoom": 16 },
+  { "nombre": "Planta Biocobre", "lat": -27.320, "lng": -70.235, "zoom": 16 }
+]
