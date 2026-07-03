@@ -1,72 +1,165 @@
 /* =====================================================================
-   MiniGIS - Operaciones Pucobre — Estilos
+   GIS PS — Pucobre · Propiedad Superficial
+   Identidad visual corporativa (paleta "papel/tinta/cobre")
    ===================================================================== */
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body, html { height: 100%; overflow: hidden; }
+:root{
+  --paper:#f6f4ee;
+  --ink:#1c2b22;
+  --line:#2c3e34;
+  --accent:#9c5b2c;
+  --accent-soft:#e8d9c5;
+  --panel:#ffffff;
+  --panel-border:#cfc7b3;
+  --muted:#6b6456;
+  --serif: "Georgia", "Times New Roman", serif;
+  --sans: "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--sans); }
+body, html { height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); }
+
 #app-container { display: flex; width: 100%; height: 100%; }
-#sidebar { width: 320px; background-color: #2c3e50; color: #ecf0f1; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.2); overflow-y: auto; }
+
+#sidebar {
+    width: 320px;
+    background-color: var(--panel);
+    color: var(--ink);
+    padding: 24px 20px 20px;
+    z-index: 1000;
+    border-right: 1px solid var(--panel-border);
+    box-shadow: 2px 0 5px rgba(28,43,34,0.08);
+    overflow-y: auto;
+}
+
 #map-container { flex-grow: 1; position: relative; }
 #map { width: 100%; height: 100%; }
-.section { margin-bottom: 25px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
-h3 { font-size: 0.9rem; color: #bdc3c7; margin-bottom: 10px; text-transform: uppercase; }
+
+/* ---------- Marca ---------- */
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.brand .logo { width: 42px; height: 42px; border-radius: 4px; display: block; flex-shrink: 0; }
+.brand-text { display: flex; flex-direction: column; }
+.brand h1 {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: .2px;
+    line-height: 1.2;
+    color: var(--ink);
+}
+.brand .tag {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+/* ---------- Secciones ---------- */
+.section { margin: 22px 0; padding-bottom: 15px; border-bottom: 1px solid var(--panel-border); }
+h3 {
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--accent-soft);
+}
+
 .control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.nav-btn { background: #34495e; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; flex: 1; }
-.nav-btn:hover { background: #3498db; }
-.rol-label { background: rgba(30,39,46,0.85); color: #ecf0f1; border: none; font-size: 0.75rem; padding: 2px 6px; }
+.nav-btn {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: bold;
+    flex: 1;
+    font-family: var(--sans);
+    transition: background .15s ease;
+}
+.nav-btn:hover { background: #7d4a24; }
+
+.rol-label {
+    background: rgba(28,43,34,0.85);
+    color: #f6f4ee;
+    border: none;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+}
+
 input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Listas dinámicas: accesos directos y capas */
 .lista-scroll { max-height: 220px; overflow-y: auto; padding-right: 4px; }
-.opcion-item { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-.opcion-item:hover { background: #34495e; }
-.opcion-item input { flex-shrink: 0; cursor: pointer; }
+.opcion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--ink);
+}
+.opcion-item:hover { background: var(--accent-soft); }
+.opcion-item input { flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
 .opcion-item label { cursor: pointer; flex: 1; }
 .opcion-item .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-.placeholder-texto { font-size: 0.8rem; color: #7f8c8d; padding: 4px; }
+.placeholder-texto { font-size: 0.8rem; color: var(--muted); padding: 4px; }
 
-/* Ventana flotante de información */
+/* ---------- Ventana flotante de información ---------- */
 #floating-panel {
     position: absolute;
     top: 20px;
     right: 20px;
     width: 320px;
     max-height: 70%;
-    background: #1e272e;
-    color: #ecf0f1;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    background: var(--panel);
+    color: var(--ink);
+    border-radius: 6px;
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 6px 20px rgba(28,43,34,0.25);
     z-index: 1200;
     display: none;
     flex-direction: column;
     overflow: hidden;
 }
 #floating-panel-header {
-    background: #2c3e50;
+    background: var(--accent-soft);
     padding: 10px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: move;
     user-select: none;
+    border-bottom: 1px solid var(--panel-border);
 }
-#floating-panel-header span { font-weight: bold; font-size: 0.9rem; }
+#floating-panel-header span {
+    font-weight: bold;
+    font-size: 0.9rem;
+    font-family: var(--serif);
+    color: var(--ink);
+}
 #floating-panel-close {
     background: none;
     border: none;
-    color: #ecf0f1;
+    color: var(--ink);
     font-size: 1.1rem;
     cursor: pointer;
     line-height: 1;
     padding: 2px 6px;
     border-radius: 4px;
 }
-#floating-panel-close:hover { background: #e74c3c; }
+#floating-panel-close:hover { background: var(--accent); color: #fff; }
 #floating-panel-body {
     padding: 12px;
     font-size: 0.85rem;
     overflow-y: auto;
 }
-#floating-panel-body div { padding: 3px 0; border-bottom: 1px solid #2c3540; }
-#floating-panel-body a { color: #3498db; text-decoration: none; font-weight: bold; }
+#floating-panel-body div { padding: 3px 0; border-bottom: 1px solid var(--paper); }
+#floating-panel-body a { color: var(--accent); text-decoration: none; font-weight: bold; }
 #floating-panel-body a:hover { text-decoration: underline; }
