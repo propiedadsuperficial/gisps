@@ -1,0 +1,72 @@
+/* =====================================================================
+   MiniGIS - Operaciones Pucobre — Estilos
+   ===================================================================== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body, html { height: 100%; overflow: hidden; }
+#app-container { display: flex; width: 100%; height: 100%; }
+#sidebar { width: 320px; background-color: #2c3e50; color: #ecf0f1; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.2); overflow-y: auto; }
+#map-container { flex-grow: 1; position: relative; }
+#map { width: 100%; height: 100%; }
+.section { margin-bottom: 25px; border-bottom: 1px solid #34495e; padding-bottom: 15px; }
+h3 { font-size: 0.9rem; color: #bdc3c7; margin-bottom: 10px; text-transform: uppercase; }
+.control-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.nav-btn { background: #34495e; border: none; color: white; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; flex: 1; }
+.nav-btn:hover { background: #3498db; }
+.rol-label { background: rgba(30,39,46,0.85); color: #ecf0f1; border: none; font-size: 0.75rem; padding: 2px 6px; }
+input[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Listas dinámicas: accesos directos y capas */
+.lista-scroll { max-height: 220px; overflow-y: auto; padding-right: 4px; }
+.opcion-item { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+.opcion-item:hover { background: #34495e; }
+.opcion-item input { flex-shrink: 0; cursor: pointer; }
+.opcion-item label { cursor: pointer; flex: 1; }
+.opcion-item .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.placeholder-texto { font-size: 0.8rem; color: #7f8c8d; padding: 4px; }
+
+/* Ventana flotante de información */
+#floating-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    max-height: 70%;
+    background: #1e272e;
+    color: #ecf0f1;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    z-index: 1200;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+#floating-panel-header {
+    background: #2c3e50;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    user-select: none;
+}
+#floating-panel-header span { font-weight: bold; font-size: 0.9rem; }
+#floating-panel-close {
+    background: none;
+    border: none;
+    color: #ecf0f1;
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+#floating-panel-close:hover { background: #e74c3c; }
+#floating-panel-body {
+    padding: 12px;
+    font-size: 0.85rem;
+    overflow-y: auto;
+}
+#floating-panel-body div { padding: 3px 0; border-bottom: 1px solid #2c3540; }
+#floating-panel-body a { color: #3498db; text-decoration: none; font-weight: bold; }
+#floating-panel-body a:hover { text-decoration: underline; }
